@@ -51,6 +51,13 @@
             <artifactId>yasson</artifactId>
             <version>2.0.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/jakarta.json.bind/jakarta.json.bind-api -->
+        <dependency>
+            <groupId>jakarta.json.bind</groupId>
+            <artifactId>jakarta.json.bind-api</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+
 
     </dependencies>
 
