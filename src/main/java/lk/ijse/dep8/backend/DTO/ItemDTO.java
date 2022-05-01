@@ -11,6 +11,7 @@ public class ItemDTO implements Serializable {
     private String isbn;
     private String name;
     private String author;
+    private String price;
     @JsonbTransient
     private  byte[] preview;
     private boolean availability;
