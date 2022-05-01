@@ -2,20 +2,20 @@ package lk.ijse.dep8.backend.DTO;
 
 import java.io.Serializable;
 
-public class NewItemDTO implements Serializable {
+public class NewCusDTO implements Serializable {
     private String nic;
     private String name;
     private String contact;
 
 
-    public NewItemDTO(String nic, String name, String contact) {
+    public NewCusDTO(String nic, String name, String contact) {
         this.nic = nic;
         this.name = name;
         this.contact = contact;
     }
 
 
-    public NewItemDTO() {
+    public NewCusDTO() {
     }
 
     public String getNic() {

@@ -4,7 +4,7 @@ import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbException;
 //import lk.ijse.dep8.backend.DTO.BookDTO2;
-import lk.ijse.dep8.backend.DTO.NewItemDTO;
+import lk.ijse.dep8.backend.DTO.NewCusDTO;
 
 import javax.annotation.Resource;
 import javax.servlet.*;
@@ -16,10 +16,11 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
-@WebServlet(name = "NewItemServlet", value = {"/item/*"})
+@WebServlet(name = "NewItemServlet", value = {"/cus/*"})
 
-public class NewItemServlet extends HttpServlet {
+public class NewCusServlet extends HttpServlet {
 
     @Resource(name = "java:comp/env/jdbc/pool4pos")
     private volatile DataSource pool;
@@ -32,6 +33,49 @@ public class NewItemServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         doSaveOrUpdate(request, response);
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (req.getPathInfo() == null || req.getPathInfo().equals("/")) {
+            resp.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED, "Unable to delete all members yet");
+            return;
+        } else if (req.getPathInfo() != null &&
+                !req.getPathInfo().substring(1).matches("\\d{9}[Vv][/]?")) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Customer not found");
+            return;
+        }
+
+        String nic = req.getPathInfo().replaceAll("[/]", "");
+
+        try (Connection connection = pool.getConnection()) {
+            PreparedStatement stm = connection.
+                    prepareStatement("SELECT * FROM cus WHERE nic=?");
+            stm.setString(1, nic);
+            ResultSet rst = stm.executeQuery();
+
+            if (rst.next()) {
+                stm = connection.prepareStatement("SELECT * FROM cus INNER JOIN odr i on cus.nic = i.nic WHERE i.nic = ?");
+                stm.setString(1, nic);
+                if (stm.executeQuery().next()){
+                    resp.sendError(HttpServletResponse.SC_CONFLICT, "Unable to delete the Customer due to open issue");
+                    return;
+                }
+
+                stm = connection.prepareStatement("DELETE FROM cus WHERE nic=?");
+                stm.setString(1, nic);
+                if (stm.executeUpdate() != 1) {
+                    throw new RuntimeException("Failed to delete the Customer");
+                }
+                resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            } else {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Customer not found");
+            }
+        } catch (SQLException | RuntimeException e) {
+            e.printStackTrace();
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+
     }
 
     private void doSaveOrUpdate(HttpServletRequest req, HttpServletResponse res) throws IOException {
@@ -49,13 +93,13 @@ public class NewItemServlet extends HttpServlet {
             return;
         } else if (method.equals("PUT") && !(pathInfo != null &&
                 pathInfo.substring(1).matches("\\d{9}[Vv][/]?"))) {
-            res.sendError(HttpServletResponse.SC_NOT_FOUND, "Member does not exist");
+            res.sendError(HttpServletResponse.SC_NOT_FOUND, "Customer does not exist");
             return;
         }
 
         try {
             Jsonb jsonb = JsonbBuilder.create();
-            NewItemDTO member = jsonb.fromJson(req.getReader(), NewItemDTO.class);
+            NewCusDTO member = jsonb.fromJson(req.getReader(), NewCusDTO.class);
             if (method.equals("POST") &&
                     (member.getNic() == null || !member.getNic().matches("\\d{9}[Vv]"))) {
                 throw new ValidationException("Invalid NIC");
@@ -76,14 +120,14 @@ public class NewItemServlet extends HttpServlet {
 
                 if (rst.next()) {
                     if (method.equals("POST")) {
-                        res.sendError(HttpServletResponse.SC_CONFLICT, "Member already exists");
+                        res.sendError(HttpServletResponse.SC_CONFLICT, "customer already exists");
                     } else {
                         stm = connection.prepareStatement("UPDATE cus SET name=?, contact=? WHERE nic=?");
                         stm.setString(1, member.getName());
                         stm.setString(2, member.getContact());
                         stm.setString(3, member.getNic());
                         if (stm.executeUpdate() != 1) {
-                            throw new RuntimeException("Failed to update the member");
+                            throw new RuntimeException("Failed to update the Customer");
                         }
                         res.setStatus(HttpServletResponse.SC_NO_CONTENT);
                     }
@@ -93,7 +137,7 @@ public class NewItemServlet extends HttpServlet {
                     stm.setString(2, member.getName());
                     stm.setString(3, member.getContact());
                     if (stm.executeUpdate() != 1) {
-                        throw new RuntimeException("Failed to register the member");
+                        throw new RuntimeException("Failed to register the Customer");
                     }
                     res.setStatus(HttpServletResponse.SC_CREATED);
                 }
