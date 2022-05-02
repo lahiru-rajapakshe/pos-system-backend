@@ -159,7 +159,7 @@ public class ItemServlet extends HttpServlet {
 
             if (rst.next()) {
 
-                stm = connection.prepareStatement("SELECT * FROM item INNER JOIN issue i on book.isbn = i.isbn WHERE i.isbn=?");
+                stm = connection.prepareStatement("SELECT * FROM item INNER JOIN issue i on item.isbn = i.isbn WHERE i.isbn=?");
                 stm.setString(1, isbn);
                 rst = stm.executeQuery();
                 if (rst.next()){
