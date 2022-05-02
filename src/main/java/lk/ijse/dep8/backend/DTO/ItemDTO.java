@@ -40,6 +40,15 @@ public class ItemDTO implements Serializable {
         this.availability = availability;
     }
 
+    public ItemDTO(String isbn, String name, String author, String price, byte[] preview) {
+        this.isbn = isbn;
+        this.name = name;
+        this.author = author;
+        this.price = price;
+        this.preview = preview;
+
+    }
+
     public String getIsbn() {
         return isbn;
     }
@@ -66,6 +75,14 @@ public class ItemDTO implements Serializable {
 
     public byte[] getPreview() {
         return preview;
+    }
+
+    public String getPrice() {
+        return price;
+    }
+
+    public void setPrice(String price) {
+        this.price = price;
     }
 
     @JsonbProperty(value = "preview", nillable = true)

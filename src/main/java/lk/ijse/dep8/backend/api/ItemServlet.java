@@ -66,6 +66,8 @@ public class ItemServlet extends HttpServlet {
             String name = req.getParameter("name");
             String author = req.getParameter("author");
             Part preview = req.getPart("preview");
+            String price = req.getParameter("price");
+
 
             ItemDTO book;
             if (preview != null && !preview.getSubmittedFileName().isEmpty()) {
@@ -76,7 +78,7 @@ public class ItemServlet extends HttpServlet {
 
                 byte[] buffer = new byte[(int) preview.getSize()];
                 preview.getInputStream().read(buffer);
-                book = new ItemDTO(isbn, name, author, buffer);
+                book = new ItemDTO(isbn, name, author,price, buffer);
             } else {
                 book = new ItemDTO(isbn, name, author);
             }
@@ -105,7 +107,7 @@ public class ItemServlet extends HttpServlet {
                         res.sendError(HttpServletResponse.SC_CONFLICT, "Item already exists");
                     } else {
                         stm = connection.
-                                prepareStatement("UPDATE item SET name=?, author=?, preview=? WHERE isbn=?");
+                                prepareStatement("UPDATE item SET name=?, company=?, preview=? WHERE isbn=?");
                         stm.setString(1, book.getName());
                         stm.setString(2, book.getAuthor());
                         stm.setBlob(3, book.getPreview() != null ? new SerialBlob(book.getPreview()) : null);
@@ -116,11 +118,12 @@ public class ItemServlet extends HttpServlet {
                         res.setStatus(HttpServletResponse.SC_NO_CONTENT);
                     }
                 } else {
-                    stm = connection.prepareStatement("INSERT INTO item (isbn, name, author, preview) VALUES (?,?,?,?)");
+                    stm = connection.prepareStatement("INSERT INTO item (isbn, name, company, preview,price) VALUES (?,?,?,?,?)");
                     stm.setString(1, book.getIsbn());
                     stm.setString(2, book.getName());
                     stm.setString(3, book.getAuthor());
                     stm.setBlob(4, book.getPreview() == null ? null : new SerialBlob(book.getPreview()));
+                    stm.setString(5,book.getPrice());
                     if (stm.executeUpdate() != 1) {
                         throw new RuntimeException("Failed to add a Item");
                     }
