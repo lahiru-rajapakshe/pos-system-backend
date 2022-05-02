@@ -184,6 +184,8 @@ public class ItemServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    System.out.println("get method performmed !");
+
         if (req.getPathInfo() != null) {
             if (req.getPathInfo().substring(1).matches("\\d+[/]?")){
                 searchBook(req, resp);
@@ -201,10 +203,10 @@ public class ItemServlet extends HttpServlet {
 
             boolean pagination = req.getParameter("page") != null &&
                     req.getParameter("size") != null;
-            String sql = "SELECT b.*, i.id FROM item b LEFT OUTER JOIN issue i on b.isbn = i.isbn WHERE b.isbn LIKE ? OR b.name LIKE ? OR b.author LIKE ? " + ((pagination) ? "LIMIT ? OFFSET ?" : "");
+            String sql = "SELECT b.*, i.id FROM item b LEFT OUTER JOIN odr i on b.isbn = i.isbn WHERE b.isbn LIKE ? OR b.name LIKE ? OR b.company LIKE ? " + ((pagination) ? "LIMIT ? OFFSET ?" : "");
 
             PreparedStatement stm = connection.prepareStatement(sql);
-            PreparedStatement stmCount = connection.prepareStatement("SELECT * FROM item WHERE isbn LIKE ? OR name LIKE ? OR author LIKE ?");
+            PreparedStatement stmCount = connection.prepareStatement("SELECT * FROM item WHERE isbn LIKE ? OR name LIKE ? OR company LIKE ?");
 
             stm.setString(1, query);
             stm.setString(2, query);
@@ -227,7 +229,7 @@ public class ItemServlet extends HttpServlet {
                 books.add((new ItemDTO(
                         rst.getString("isbn"),
                         rst.getString("name"),
-                        rst.getString("author"),
+                        rst.getString("company"),
                         rst.getBytes("preview"),
                         rst.getString("id") == null
                 )));
@@ -252,7 +254,7 @@ public class ItemServlet extends HttpServlet {
 
             (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException{
         try (Connection connection = pool.getConnection()) {
-            PreparedStatement stm = connection.prepareStatement("SELECT b.*, i.id FROM item b LEFT OUTER JOIN issue i on b.isbn = i.isbn WHERE b.isbn = ?");
+            PreparedStatement stm = connection.prepareStatement("SELECT b.*, i.id FROM item b LEFT OUTER JOIN odr i on b.isbn = i.isbn WHERE b.isbn = ?");
             stm.setString(1, req.getPathInfo().replaceAll("[/]", ""));
             ResultSet rst = stm.executeQuery();
             if (!rst.next()){
